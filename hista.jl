@@ -47,7 +47,7 @@ function compute_lipschitz(A, gamma)
     return (sigma_max^2) / gamma
 end
 
-function HISTA(A, b, lambda, gamma, max_iter = 1000, tol = 1e-6)
+function HISTA(A, b, lambda, gamma, line_search = false, max_iter = 1000, tol = 1e-6)
     # Initialize variables
     x = zeros(size(A, 2))
     L = compute_lipschitz(A, gamma)
@@ -56,6 +56,19 @@ function HISTA(A, b, lambda, gamma, max_iter = 1000, tol = 1e-6)
     for k in 1:max_iter
     # Gradient of the smooth part
     grad = A' * huber_grad(A * x - b, gamma)
+
+    # Backtracking line search
+    if line_search
+        eta_tmp = eta
+        while true
+            y_tmp = x - eta_tmp * grad
+            if sum(huber_loss.(A * y_tmp - b, gamma)) <= sum(huber_loss.(A * x - b, gamma)) - 0.5 * eta_tmp * norm(grad)^2
+                break
+            end
+            eta_tmp *= 0.5
+        end
+        eta = eta_tmp
+    end
 
     # Gradient descent step
     y = x - eta * grad
@@ -76,7 +89,7 @@ function HISTA(A, b, lambda, gamma, max_iter = 1000, tol = 1e-6)
     return x
 end
 
-function FastHISTA(A, b, lambda, gamma, max_iter = 1000, tol = 1e-6)
+function FastHISTA(A, b, lambda, gamma, line_search = false, max_iter = 1000, tol = 1e-6)
 
     # Initialize variables
     x = zeros(size(A, 2))
@@ -93,6 +106,19 @@ function FastHISTA(A, b, lambda, gamma, max_iter = 1000, tol = 1e-6)
     
     # Gradient of the smooth part   
     grad = A' * huber_grad(A * y - b, gamma)
+
+    # Backtracking line search
+    if line_search
+        eta_tmp = eta
+        while true
+            z_tmp = y - eta_tmp * grad
+            if sum(huber_loss.(A * z_tmp - b, gamma)) <= sum(huber_loss.(A * y - b, gamma)) - 0.5 * eta_tmp * norm(grad)^2
+                break
+            end
+            eta_tmp *= 0.95
+        end
+        eta = eta_tmp
+    end
 
     # Gradient descent step
     z = y - eta * grad

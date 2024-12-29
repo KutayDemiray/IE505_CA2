@@ -19,12 +19,16 @@ outlier_indices = sample(1:100, 5, replace=false)
 b[outlier_indices] .= rand(Uniform(50, 100), 5)
 
 x_hista = HISTA(A, b, lambda, gamma)
+x_hista_ls = HISTA(A, b, lambda, gamma, true)
 x_fasthista = FastHISTA(A, b, lambda, gamma)
+x_fasthista_ls = FastHISTA(A, b, lambda, gamma, true)
 
 println("Test 1")
 println("True:", x_true)
 println("Pred HISTA:", x_hista)
+println("Pred HISTA w/ Line Search:", x_hista_ls)
 println("Pred FastHISTA:", x_fasthista)
+println("Pred FastHISTA w/ Line Search:", x_fasthista_ls)
 println("")
 
 # Test 2
@@ -44,12 +48,16 @@ epsilon[outlier_indices] .= rand(Normal(0, 5^2), 10)
 b = A * x_true + epsilon
 
 x_hista = HISTA(A, b, lambda, gamma)
+x_hista_ls = HISTA(A, b, lambda, gamma, true)
 x_fasthista = FastHISTA(A, b, lambda, gamma)
+x_fasthista_ls = FastHISTA(A, b, lambda, gamma, true)
 
 println("Test 2")
 println("True:", x_true)
 println("Pred HISTA:", x_hista)
+println("Pred HISTA w/ Line Search:", x_hista_ls)
 println("Pred FastHISTA:", x_fasthista)
+println("Pred FastHISTA w/ Line Search:", x_fasthista_ls)
 println("")
 
 # Test 3
@@ -75,11 +83,15 @@ x_true[nonzero_indices] .= rand(Uniform(-10, 10), 3)
 epsilon = rand(Normal(0, sigma^2), 100)
 b = A * x_true + epsilon
 
-x_hista = HISTA(A, b, lambda, gamma, 100000)
-x_fasthista = FastHISTA(A, b, lambda, gamma)
+x_hista = HISTA(A, b, lambda, gamma, false, 100000)
+x_hista_ls = HISTA(A, b, lambda, gamma, true, 100000)
+x_fasthista = FastHISTA(A, b, lambda, gamma, false, 100000)
+x_fasthista_ls = FastHISTA(A, b, lambda, gamma, true, 100000)
 
 println("Test 3")
 println("True:", x_true)
 println("Pred HISTA:", x_hista)
+println("Pred HISTA w/ Line Search:", x_hista_ls)
 println("Pred FastHISTA:", x_fasthista)
+println("Pred FastHISTA w/ Line Search:", x_fasthista_ls)
 println("")
