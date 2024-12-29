@@ -65,7 +65,7 @@ function HISTA(A, b, lambda, gamma, line_search = false, max_iter = 1000, tol = 
             if sum(huber_loss.(A * y_tmp - b, gamma)) <= sum(huber_loss.(A * x - b, gamma)) - 0.5 * eta_tmp * norm(grad)^2
                 break
             end
-            eta_tmp *= 0.5
+            eta_tmp *= 0.95
         end
         eta = eta_tmp
     end
