@@ -19,10 +19,12 @@ outlier_indices = sample(1:100, 5, replace=false)
 b[outlier_indices] .= rand(Uniform(50, 100), 5)
 
 x_hista = HISTA(A, b, lambda, gamma)
+x_fasthista = FastHISTA(A, b, lambda, gamma)
 
 println("Test 1")
 println("True:", x_true)
-println("Pred:", x_hista)
+println("Pred HISTA:", x_hista)
+println("Pred FastHISTA:", x_fasthista)
 println("")
 
 # Test 2
@@ -42,10 +44,12 @@ epsilon[outlier_indices] .= rand(Normal(0, 5^2), 10)
 b = A * x_true + epsilon
 
 x_hista = HISTA(A, b, lambda, gamma)
+x_fasthista = FastHISTA(A, b, lambda, gamma)
 
 println("Test 2")
 println("True:", x_true)
-println("Pred:", x_hista)
+println("Pred HISTA:", x_hista)
+println("Pred FastHISTA:", x_fasthista)
 println("")
 
 # Test 3
@@ -72,8 +76,10 @@ epsilon = rand(Normal(0, sigma^2), 100)
 b = A * x_true + epsilon
 
 x_hista = HISTA(A, b, lambda, gamma, 100000)
+x_fasthista = FastHISTA(A, b, lambda, gamma)
 
 println("Test 3")
 println("True:", x_true)
-println("Pred:", x_hista)
+println("Pred HISTA:", x_hista)
+println("Pred FastHISTA:", x_fasthista)
 println("")

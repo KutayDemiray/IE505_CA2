@@ -75,3 +75,46 @@ function HISTA(A, b, lambda, gamma, max_iter = 1000, tol = 1e-6)
     println("Reached maximum iterations without full convergence.")
     return x
 end
+
+function FastHISTA(A, b, lambda, gamma, max_iter = 1000, tol = 1e-6)
+
+    # Initialize variables
+    x = zeros(size(A, 2))
+    x_prev = zeros(size(A, 2))
+    L = compute_lipschitz(A, gamma)
+    eta = 1.0 / L  # constant step size
+    t = 1.0 # momentum param
+    t_prev = 1.0
+
+    for k in 1:max_iter
+    
+    # Momentum update
+    y = x + ((t_prev - 1)/(t)) * (x - x_prev)
+    
+    # Gradient of the smooth part   
+    grad = A' * huber_grad(A * y - b, gamma)
+
+    # Gradient descent step
+    z = y - eta * grad
+
+    # Proximal step
+    x_new = prox_l1(z, lambda * eta)
+
+    # Update momentum parameter
+    t_new = (1 + sqrt(1 + 4 * t^2)) / 2
+
+    # Convergence check
+    if norm(x_new - x) < tol
+        println("Converged in $k iterations.")
+        return x_new
+    end
+
+    x_prev = x
+    x = x_new
+    t_prev = t
+    t = t_new
+    end
+
+    println("Reached maximum iterations without full convergence.")
+    return x
+end
