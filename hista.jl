@@ -4,9 +4,10 @@ using Random, Distributions
 A = randn(100, 10)
 
 function huber_loss(z, gamma)
-    if abs(z) <= gamma begin
-        return z^2 / (2 * gamma)
-    end
+    if abs(z) <= gamma
+        begin
+            return z^2 / (2 * gamma)
+        end
     else
         return abs(z) - gamma / 2
     end
@@ -45,7 +46,7 @@ function prox_l1(z, lambda)
     return prox
 end
 
-function compute_lipschitz(A, gamma)    
+function compute_lipschitz(A, gamma)
     # lipschitz constant of an affine function
     # is the largest singular value of A
     sigma_max = svd(A).S[1]
@@ -53,7 +54,7 @@ function compute_lipschitz(A, gamma)
     return (sigma_max^2) / gamma
 end
 
-function HISTA(A, b, lambda, gamma, line_search = false, max_iter = 1000, tol = 1e-6, beta = 0.9)
+function HISTA(A, b, lambda, gamma, line_search=false, max_iter=100000, tol=1e-6, beta=0.9)
     # Initialize variables
     x = zeros(size(A, 2))
     x_new = copy(x)
@@ -69,13 +70,13 @@ function HISTA(A, b, lambda, gamma, line_search = false, max_iter = 1000, tol = 
             eta_tmp = eta
             while true
                 x_new = prox_l1(x - eta_tmp * grad, lambda * eta_tmp)
-                G_eta = (x - x_new)/eta_tmp
+                G_eta = (x - x_new) / eta_tmp
 
                 huber_current = sum(huber_loss.(A * x - b, gamma))
                 huber_new = sum(huber_loss.(A * x_new - b, gamma))
 
                 lhs = huber_new
-                rhs = huber_current - eta_tmp * dot(grad, G_eta) + (eta_tmp/2)*(norm(G_eta)^2)
+                rhs = huber_current - eta_tmp * dot(grad, G_eta) + (eta_tmp / 2) * (norm(G_eta)^2)
 
                 if lhs <= rhs
                     break
@@ -104,7 +105,7 @@ function HISTA(A, b, lambda, gamma, line_search = false, max_iter = 1000, tol = 
     return x
 end
 
-function FastHISTA(A, b, lambda, gamma, line_search = false, max_iter = 1000, tol = 1e-6, beta = 0.9)
+function FastHISTA(A, b, lambda, gamma, line_search=false, max_iter=100000, tol=1e-6, beta=0.9)
 
     # Initialize variables
     x = zeros(size(A, 2))
@@ -116,10 +117,10 @@ function FastHISTA(A, b, lambda, gamma, line_search = false, max_iter = 1000, to
     t_prev = 1.0
 
     for k in 1:max_iter
-    
+
         # Momentum update
-        y = x + ((t_prev - 1)/(t)) * (x - x_prev)
-        
+        y = x + ((t_prev - 1) / (t)) * (x - x_prev)
+
         # Gradient of the smooth part   
         grad = A' * huber_grad(A * y - b, gamma)
 
@@ -128,13 +129,13 @@ function FastHISTA(A, b, lambda, gamma, line_search = false, max_iter = 1000, to
             eta_tmp = eta
             while true
                 x_new = prox_l1(x - eta_tmp * grad, lambda * eta_tmp)
-                G_eta = (x - x_new)/eta_tmp
+                G_eta = (x - x_new) / eta_tmp
 
                 huber_current = sum(huber_loss.(A * x - b, gamma))
                 huber_new = sum(huber_loss.(A * x_new - b, gamma))
 
                 lhs = huber_new
-                rhs = huber_current - eta_tmp * dot(grad, G_eta) + (eta_tmp/2)*(norm(G_eta)^2)
+                rhs = huber_current - eta_tmp * dot(grad, G_eta) + (eta_tmp / 2) * (norm(G_eta)^2)
 
                 if lhs <= rhs
                     break
@@ -163,6 +164,81 @@ function FastHISTA(A, b, lambda, gamma, line_search = false, max_iter = 1000, to
         x = x_new
         t_prev = t
         t = t_new
+    end
+
+    println("Reached maximum iterations without full convergence.")
+    return x
+end
+
+function ProxNewton(A, b, lambda, gamma, line_search=true, max_iter=100000, tol=1e-6, alpha=0.1, beta=0.5)
+    # Initialize variables
+    x = zeros(size(A, 2))  # Initial guess
+    x_new = copy(x)
+
+    epsilon = 1e-6  # Regularization parameter
+
+    for k in 1:max_iter
+        # Compute residual
+        residual = A * x - b
+
+        # Compute gradient of the smooth part (Huber loss)
+        grad = A' * huber_grad(residual, gamma)
+
+        # Compute exact Hessian with regularization
+        W = Diagonal([abs(residual[i]) <= gamma ? 1.0 / gamma : 0.0 for i in 1:length(residual)])
+        H = A' * W * A + epsilon * I(size(A, 2))  # Regularized Hessian
+
+        # Initialize `z` with a fallback value
+        z = grad  # Fallback to gradient descent if no solution for z is found
+
+        # Solve the Newton step (scaled proximal mapping)
+        try
+            z = H \ grad  # Solve linear system
+        catch e
+            if isa(e, SingularException)
+                println("Warning: Singular Hessian detected, using pseudoinverse.")
+                z = pinv(H) * grad  # Use pseudoinverse as a fallback
+            else
+                rethrow(e)
+            end
+        end
+
+        # Compute proximal mapping and direction
+        prox_x = prox_l1(x - z, lambda)
+        v = prox_x - x  # Direction
+
+        # Backtracking line search
+        t = 1.0  # Initial step size
+        while line_search
+            x_trial = x + t * v
+            f_x = robust_huber(x, A, b, gamma, lambda)
+            f_x_trial = robust_huber(x_trial, A, b, gamma, lambda)
+            h_x = lambda * sum(abs.(x))
+            h_x_trial = lambda * sum(abs.(x_trial))
+
+            lhs = f_x_trial
+            rhs = f_x + alpha * t * dot(grad, v) + alpha * (h_x_trial - h_x)
+
+            if lhs <= rhs
+                break
+            end
+            t *= beta  # Shrink step size
+            if t < 1e-12
+                println("Step size too small, exiting line search.")
+                break
+            end
+        end
+
+        # Update solution
+        x_new = x + t * v
+
+        # Convergence check
+        if norm(x_new - x) < tol
+            println("Converged in $k iterations.")
+            return x_new
+        end
+
+        x = x_new
     end
 
     println("Reached maximum iterations without full convergence.")
