@@ -64,7 +64,7 @@ function HISTA(A, b, lambda, gamma, line_search=false, max_iter=100000, tol=1e-6
         L = compute_lipschitz(A, gamma)
         eta = 1.0 / L  # constant step size
     end
-    
+
 
     for k in 1:max_iter
         # Gradient of the smooth part
@@ -111,7 +111,6 @@ function HISTA(A, b, lambda, gamma, line_search=false, max_iter=100000, tol=1e-6
 end
 
 function FastHISTA(A, b, lambda, gamma, line_search=false, max_iter=100000, tol=1e-6, beta=0.9)
-
     # Initialize variables
     x = zeros(size(A, 2))
     x_new = copy(x)
@@ -122,25 +121,25 @@ function FastHISTA(A, b, lambda, gamma, line_search=false, max_iter=100000, tol=
         L = compute_lipschitz(A, gamma)
         eta = 1.0 / L  # constant step size
     end
-    t = 1.0 # momentum param
+    t = 1.0  # momentum parameter
     t_prev = 1.0
 
     for k in 1:max_iter
-
         # Momentum update
-        y = x + ((t_prev - 1) / (t)) * (x - x_prev)
+        momentum = min(0.9, (t_prev - 1) / t)
+        y = x + momentum * (x - x_prev)
 
-        # Gradient of the smooth part   
+        # Gradient of the smooth part
         grad = A' * huber_grad(A * y - b, gamma)
 
         # Backtracking line search
         if line_search
             eta_tmp = eta
             while true
-                x_new = prox_l1(x - eta_tmp * grad, lambda * eta_tmp)
-                G_eta = (x - x_new) / eta_tmp
+                x_new = prox_l1(y - eta_tmp * grad, lambda * eta_tmp)
+                G_eta = (y - x_new) / eta_tmp
 
-                huber_current = sum(huber_loss.(A * x - b, gamma))
+                huber_current = sum(huber_loss.(A * y - b, gamma))
                 huber_new = sum(huber_loss.(A * x_new - b, gamma))
 
                 lhs = huber_new
@@ -149,12 +148,12 @@ function FastHISTA(A, b, lambda, gamma, line_search=false, max_iter=100000, tol=
                 if lhs <= rhs
                     break
                 end
-                eta_tmp *= beta
+                eta_tmp = max(eta_tmp * beta, 1e-6)  # Prevent shrinking too small
             end
             eta = eta_tmp
         else
             # Gradient descent step
-            y = x - eta * grad
+            y = y - eta * grad
 
             # Proximal step
             x_new = prox_l1(y, lambda * eta)
@@ -178,6 +177,7 @@ function FastHISTA(A, b, lambda, gamma, line_search=false, max_iter=100000, tol=
     println("Reached maximum iterations without full convergence.")
     return x
 end
+
 
 function ProxNewton(A, b, lambda, gamma, line_search=true, max_iter=100000, tol=1e-6, alpha=0.1, beta=0.5)
     # Initialize variables
