@@ -33,7 +33,7 @@ println("HISTA function value w/ Line Search", robust_huber(x_hista_ls, A, b, ga
 println("Pred FastHISTA:", x_fasthista)
 println("FastHISTA function value:", robust_huber(x_fasthista, A, b, gamma, lambda))
 println("Pred FastHISTA w/ Line Search:", x_fasthista_ls)
-println("FastHISTA function value w/ Line Search", robust_huber(x_fasthista_ls, A, b, gamma, lambda))
+println("FastHISTA function value w/ Line Search:", robust_huber(x_fasthista_ls, A, b, gamma, lambda))
 println("")
 
 # Test 2
@@ -67,7 +67,7 @@ println("HISTA function value w/ Line Search", robust_huber(x_hista_ls, A, b, ga
 println("Pred FastHISTA:", x_fasthista)
 println("FastHISTA function value:", robust_huber(x_fasthista, A, b, gamma, lambda))
 println("Pred FastHISTA w/ Line Search:", x_fasthista_ls)
-println("FastHISTA function value w/ Line Search", robust_huber(x_fasthista_ls, A, b, gamma, lambda))
+println("FastHISTA function value w/ Line Search:", robust_huber(x_fasthista_ls, A, b, gamma, lambda))
 println("")
 
 # Test 3
@@ -108,5 +108,5 @@ println("HISTA function value w/ Line Search", robust_huber(x_hista_ls, A, b, ga
 println("Pred FastHISTA:", x_fasthista)
 println("FastHISTA function value:", robust_huber(x_fasthista, A, b, gamma, lambda))
 println("Pred FastHISTA w/ Line Search:", x_fasthista_ls)
-println("FastHISTA function value w/ Line Search", robust_huber(x_fasthista_ls, A, b, gamma, lambda))
+println("FastHISTA function value w/ Line Search:", robust_huber(x_fasthista_ls, A, b, gamma, lambda))
 println("")
