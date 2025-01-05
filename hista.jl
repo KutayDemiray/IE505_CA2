@@ -53,7 +53,7 @@ function compute_lipschitz(A, gamma)
     return (sigma_max^2) / gamma
 end
 
-function HISTA(A, b, lambda, gamma, line_search = false, max_iter = 1000, tol = 1e-6, beta = 0.5)
+function HISTA(A, b, lambda, gamma, line_search = false, max_iter = 1000, tol = 1e-6, beta = 0.9)
     # Initialize variables
     x = zeros(size(A, 2))
     L = compute_lipschitz(A, gamma)
@@ -103,7 +103,7 @@ function HISTA(A, b, lambda, gamma, line_search = false, max_iter = 1000, tol = 
     return x
 end
 
-function FastHISTA(A, b, lambda, gamma, line_search = false, max_iter = 1000, tol = 1e-6)
+function FastHISTA(A, b, lambda, gamma, line_search = false, max_iter = 1000, tol = 1e-6, beta = 0.9)
 
     # Initialize variables
     x = zeros(size(A, 2))
