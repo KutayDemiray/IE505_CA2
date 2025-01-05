@@ -1,6 +1,9 @@
 using Convex, SCS, LinearAlgebra, Distributions
 include("hista.jl")
 
+seed = 10
+Random.seed!(seed)
+
 # Test 1
 sigma = 1
 gamma = 1
