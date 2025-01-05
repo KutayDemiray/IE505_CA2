@@ -58,8 +58,13 @@ function HISTA(A, b, lambda, gamma, line_search=false, max_iter=100000, tol=1e-6
     # Initialize variables
     x = zeros(size(A, 2))
     x_new = copy(x)
-    L = compute_lipschitz(A, gamma)
-    eta = 1.0 / L  # constant step size
+    if line_search
+        eta = 1.0
+    else
+        L = compute_lipschitz(A, gamma)
+        eta = 1.0 / L  # constant step size
+    end
+    
 
     for k in 1:max_iter
         # Gradient of the smooth part
@@ -111,8 +116,12 @@ function FastHISTA(A, b, lambda, gamma, line_search=false, max_iter=100000, tol=
     x = zeros(size(A, 2))
     x_new = copy(x)
     x_prev = zeros(size(A, 2))
-    L = compute_lipschitz(A, gamma)
-    eta = 1.0 / L  # constant step size
+    if line_search
+        eta = 1.0
+    else
+        L = compute_lipschitz(A, gamma)
+        eta = 1.0 / L  # constant step size
+    end
     t = 1.0 # momentum param
     t_prev = 1.0
 
