@@ -12,6 +12,12 @@ function huber_loss(z, gamma)
     end
 end
 
+function robust_huber(x, A, b, gamma, lambda)
+    huber_part = sum(huber_loss.(A * x - b, gamma))
+    l1_part = lambda * sum(abs.(x))
+    return huber_part + l1_part
+end
+
 function huber_derivative(z, gamma)
     if abs(z) <= gamma
         return z / gamma
@@ -47,7 +53,7 @@ function compute_lipschitz(A, gamma)
     return (sigma_max^2) / gamma
 end
 
-function HISTA(A, b, lambda, gamma, line_search = false, max_iter = 1000, tol = 1e-6)
+function HISTA(A, b, lambda, gamma, line_search = false, max_iter = 1000, tol = 1e-6, beta = 0.5)
     # Initialize variables
     x = zeros(size(A, 2))
     L = compute_lipschitz(A, gamma)
@@ -61,20 +67,28 @@ function HISTA(A, b, lambda, gamma, line_search = false, max_iter = 1000, tol = 
     if line_search
         eta_tmp = eta
         while true
-            y_tmp = x - eta_tmp * grad
-            if sum(huber_loss.(A * y_tmp - b, gamma)) <= sum(huber_loss.(A * x - b, gamma)) - 0.5 * eta_tmp * norm(grad)^2
+            x_new = prox_l1(x - eta_tmp * grad, lambda)
+            G_eta = (x - x_new)/eta_tmp
+
+            huber_current = sum(huber_loss.(A * x - b, gamma))
+            huber_new = sum(huber_loss.(A * x_new - b, gamma))
+
+            lhs = huber_new
+            rhs = huber_current - eta_tmp * dot(grad, G_eta) + (eta_tmp/2)*(norm(G_eta)^2)
+
+            if lhs <= rhs
                 break
             end
-            eta_tmp *= 0.95
+            eta_tmp *= beta
         end
         eta = eta_tmp
+    else
+        # Gradient descent step
+        y = x - eta * grad
+
+        # Proximal step
+        x_new = prox_l1(y, lambda * eta)
     end
-
-    # Gradient descent step
-    y = x - eta * grad
-
-    # Proximal step
-    x_new = prox_l1(y, lambda * eta)
 
     # Convergence check
     if norm(x_new - x) < tol
@@ -111,20 +125,28 @@ function FastHISTA(A, b, lambda, gamma, line_search = false, max_iter = 1000, to
     if line_search
         eta_tmp = eta
         while true
-            z_tmp = y - eta_tmp * grad
-            if sum(huber_loss.(A * z_tmp - b, gamma)) <= sum(huber_loss.(A * y - b, gamma)) - 0.5 * eta_tmp * norm(grad)^2
+            x_new = prox_l1(x - eta_tmp * grad, lambda)
+            G_eta = (x - x_new)/eta_tmp
+
+            huber_current = sum(huber_loss.(A * x - b, gamma))
+            huber_new = sum(huber_loss.(A * x_new - b, gamma))
+
+            lhs = huber_new
+            rhs = huber_current - eta_tmp * dot(grad, G_eta) + (eta_tmp/2)*(norm(G_eta)^2)
+
+            if lhs <= rhs
                 break
             end
-            eta_tmp *= 0.95
+            eta_tmp *= beta
         end
         eta = eta_tmp
+    else
+        # Gradient descent step
+        y = x - eta * grad
+
+        # Proximal step
+        x_new = prox_l1(y, lambda * eta)
     end
-
-    # Gradient descent step
-    z = y - eta * grad
-
-    # Proximal step
-    x_new = prox_l1(z, lambda * eta)
 
     # Update momentum parameter
     t_new = (1 + sqrt(1 + 4 * t^2)) / 2
