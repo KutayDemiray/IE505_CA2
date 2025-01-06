@@ -85,9 +85,9 @@ function deblur_image(blurred_image, kernel, lambda, gamma, max_iter=1000, tol=1
     eta = 1.0 / L  # Step size
 
     # Run HISTA
-    println("Starting HISTA")
-    x_recovered, obj_vals = HISTA(A, b, lambda, gamma, true, 100000, 1e-3)
-    println("Finished HISTA")
+    println("Starting FHISTA")
+    x_recovered, obj_vals = FastHISTA(A, b, lambda, gamma, true, 100000, 1e-3)
+    println("Finished FHISTA")
 
     # Reshape recovered vector into an image
     deblurred_image = reshape(x_recovered, image_size)
@@ -103,15 +103,15 @@ function main()
     kernel = gaussian_kernel(5, 1.0)
 
     # Regularization and Huber loss parameters
-    lambda = 0.1
-    gamma = 1.0
+    lambda = 0.01
+    gamma = 5.0
 
     # Perform deblurring
     deblurred_image, obj_vals = deblur_image(blurred_image, kernel, lambda, gamma)
 
     # Save the result
-    save("output/deblurred_image.jpg", deblurred_image)
-    println("Deblurred image saved to output/deblurred_image.jpg")
+    save("output/deblurred_image_lambda$(lambda)_gamma$(gamma).jpg", deblurred_image)
+    println("Deblurred image saved to output/deblurred_image_lambda$(lambda)_gamma$(gamma).jpg")
 end
 
 main()

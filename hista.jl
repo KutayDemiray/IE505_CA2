@@ -173,7 +173,7 @@ function FastHISTA(A, b, lambda, gamma, line_search=false, max_iter=100000, tol=
         t_new = (1 + sqrt(1 + 4 * t^2)) / 2
 
         push!(obj_vals, robust_huber(x_new, A, b, gamma, lambda))
-
+        println("Iteration $k: $(norm(x_new - x))")
         # Convergence check
         if norm(x_new - x) < tol
             println("Converged in $k iterations.")
