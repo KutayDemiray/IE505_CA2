@@ -104,6 +104,8 @@ function HISTA(A, b, lambda, gamma, line_search=false, max_iter=100000, tol=1e-6
             x_new = prox_l1(y, lambda * eta)
         end
         push!(obj_vals, robust_huber(x_new, A, b, gamma, lambda))
+
+        println("Iteration $k: $(norm(x_new - x))")
         # Convergence check
         if norm(x_new - x) < tol
             println("Converged in $k iterations.")
