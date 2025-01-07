@@ -5,10 +5,12 @@ include("plot.jl")
 seed = 10
 Random.seed!(seed)
 
+init_t_with_L = false
+
 # Test 1
 sigma = 1
 gamma = 1
-lambda = 0.1
+lambda = 0.01
 
 A = randn(100, 10)
 x_true = zeros(10)
@@ -24,9 +26,8 @@ b[outlier_indices] .= rand(Uniform(50, 100), 5)
 
 x_hista, x_hista_vals = HISTA(A, b, lambda, gamma)
 x_hista_ls, x_hista_ls_vals = HISTA(A, b, lambda, gamma, true)
-x_fasthista, x_fasthista_vals = FastHISTA(A, b, lambda, gamma)
-x_fasthista_ls, x_fasthista_ls_vals = FastHISTA(A, b, lambda, gamma, true)
-x_proxnewton, x_proxnewton_vals = ProxNewton(A, b, lambda, gamma)
+x_fasthista, x_fasthista_vals = FastHISTA(A, b, lambda, gamma, false, init_t_with_L)
+x_fasthista_ls, x_fasthista_ls_vals = FastHISTA(A, b, lambda, gamma, true, init_t_with_L)
 x_proxnewton_ls, x_proxnewton_ls_vals = ProxNewton(A, b, lambda, gamma, true)
 x_fista, x_fista_vals = FISTA(A, b, lambda)
 x_fista_ls, x_fista_ls_vals = FISTA(A, b, lambda, true)
@@ -38,6 +39,17 @@ experiment_1_losses = Dict(
     "FastHISTA_LS" => x_fasthista_ls_vals,
     #"ProxNewton" => x_proxnewton_vals,
     #"ProxNewton_LS" => x_proxnewton_ls_vals,
+    #"FISTA" => x_fista_vals,
+    #"FISTA_LS" => x_fista_ls_vals
+)
+
+experiment_1_losses_2 = Dict(
+    #"HISTA" => x_hista_vals,
+    #"HISTA_LS" => x_hista_ls_vals,
+    #"FastHISTA" => x_fasthista_vals,
+    #"FastHISTA_LS" => x_fasthista_ls_vals,
+    #"ProxNewton" => x_proxnewton_vals,
+    "ProxNewton_LS" => x_proxnewton_ls_vals,
     #"FISTA" => x_fista_vals,
     #"FISTA_LS" => x_fista_ls_vals
 )
@@ -57,9 +69,6 @@ println("FastHISTA function value:", robust_huber(x_fasthista, A, b, gamma, lamb
 println()
 println("Pred FastHISTA w/ Line Search:", x_fasthista_ls)
 println("FastHISTA function value w/ Line Search:", robust_huber(x_fasthista_ls, A, b, gamma, lambda))
-println()
-println("Pred ProxNewton:", x_proxnewton)
-println("ProxNewton function value:", robust_huber(x_proxnewton, A, b, gamma, lambda))
 println()
 println("Pred ProxNewton w/ Line Search:", x_proxnewton_ls)
 println("ProxNewton function value w/ Line Search:", robust_huber(x_proxnewton_ls, A, b, gamma, lambda))
@@ -89,9 +98,9 @@ b = A * x_true + epsilon
 
 x_hista, x_hista_vals = HISTA(A, b, lambda, gamma)
 x_hista_ls, x_hista_ls_vals = HISTA(A, b, lambda, gamma, true)
-x_fasthista, x_fasthista_vals = FastHISTA(A, b, lambda, gamma)
-x_fasthista_ls, x_fasthista_ls_vals = FastHISTA(A, b, lambda, gamma, true)
-x_proxnewton, x_proxnewton_vals = ProxNewton(A, b, lambda, gamma)
+x_hista_ls, x_hista_ls_vals = HISTA(A, b, lambda, gamma, true)
+x_fasthista, x_fasthista_vals = FastHISTA(A, b, lambda, gamma, false, init_t_with_L)
+x_fasthista_ls, x_fasthista_ls_vals = FastHISTA(A, b, lambda, gamma, true, init_t_with_L)
 x_proxnewton_ls, x_proxnewton_ls_vals = ProxNewton(A, b, lambda, gamma, true)
 x_fista, x_fista_vals = FISTA(A, b, lambda)
 x_fista_ls, x_fista_ls_vals = FISTA(A, b, lambda, true)
@@ -103,6 +112,16 @@ experiment_2_losses = Dict(
     "FastHISTA_LS" => x_fasthista_ls_vals,
     #"ProxNewton" => x_proxnewton_vals,
     #"ProxNewton_LS" => x_proxnewton_ls_vals,
+    #"FISTA" => x_fista_vals,
+    #"FISTA_LS" => x_fista_ls_vals
+)
+
+experiment_2_losses_2 = Dict(
+    #"HISTA" => x_hista_vals,
+    #"HISTA_LS" => x_hista_ls_vals,
+    #"FastHISTA" => x_fasthista_vals,
+    #"FastHISTA_LS" => x_fasthista_ls_vals,
+    "ProxNewton_LS" => x_proxnewton_ls_vals,
     #"FISTA" => x_fista_vals,
     #"FISTA_LS" => x_fista_ls_vals
 )
@@ -122,9 +141,6 @@ println("FastHISTA function value:", robust_huber(x_fasthista, A, b, gamma, lamb
 println()
 println("Pred FastHISTA w/ Line Search:", x_fasthista_ls)
 println("FastHISTA function value w/ Line Search:", robust_huber(x_fasthista_ls, A, b, gamma, lambda))
-println()
-println("Pred ProxNewton:", x_proxnewton)
-println("ProxNewton function value:", robust_huber(x_proxnewton, A, b, gamma, lambda))
 println()
 println("Pred ProxNewton w/ Line Search:", x_proxnewton_ls)
 println("ProxNewton function value w/ Line Search:", robust_huber(x_proxnewton_ls, A, b, gamma, lambda))
@@ -161,9 +177,9 @@ b = A * x_true + epsilon
 
 x_hista, x_hista_vals = HISTA(A, b, lambda, gamma)
 x_hista_ls, x_hista_ls_vals = HISTA(A, b, lambda, gamma, true)
-x_fasthista, x_fasthista_vals = FastHISTA(A, b, lambda, gamma)
-x_fasthista_ls, x_fasthista_ls_vals = FastHISTA(A, b, lambda, gamma, true)
-x_proxnewton, x_proxnewton_vals = ProxNewton(A, b, lambda, gamma)
+x_hista_ls, x_hista_ls_vals = HISTA(A, b, lambda, gamma, true)
+x_fasthista, x_fasthista_vals = FastHISTA(A, b, lambda, gamma, false, init_t_with_L)
+x_fasthista_ls, x_fasthista_ls_vals = FastHISTA(A, b, lambda, gamma, true, init_t_with_L)
 x_proxnewton_ls, x_proxnewton_ls_vals = ProxNewton(A, b, lambda, gamma, true)
 x_fista, x_fista_vals = FISTA(A, b, lambda)
 x_fista_ls, x_fista_ls_vals = FISTA(A, b, lambda, true)
@@ -175,6 +191,16 @@ experiment_3_losses = Dict(
     "FastHISTA_LS" => x_fasthista_ls_vals,
     #"ProxNewton" => x_proxnewton_vals,
     #"ProxNewton_LS" => x_proxnewton_ls_vals,
+    #"FISTA" => x_fista_vals,
+    #"FISTA_LS" => x_fista_ls_vals
+)
+
+experiment_3_losses_2 = Dict(
+    #"HISTA" => x_hista_vals,
+    #"HISTA_LS" => x_hista_ls_vals,
+    #"FastHISTA" => x_fasthista_vals,
+    #"FastHISTA_LS" => x_fasthista_ls_vals,
+    "ProxNewton_LS" => x_proxnewton_ls_vals,
     #"FISTA" => x_fista_vals,
     #"FISTA_LS" => x_fista_ls_vals
 )
@@ -195,9 +221,6 @@ println()
 println("Pred FastHISTA w/ Line Search:", x_fasthista_ls)
 println("FastHISTA function value w/ Line Search:", robust_huber(x_fasthista_ls, A, b, gamma, lambda))
 println()
-println("Pred ProxNewton:", x_proxnewton)
-println("ProxNewton function value:", robust_huber(x_proxnewton, A, b, gamma, lambda))
-println()
 println("Pred ProxNewton w/ Line Search:", x_proxnewton_ls)
 println("ProxNewton function value w/ Line Search:", robust_huber(x_proxnewton_ls, A, b, gamma, lambda))
 println()
@@ -210,5 +233,8 @@ println("")
 
 # plot losses
 loss_data = [experiment_1_losses, experiment_2_losses, experiment_3_losses]
+loss_data_2 = [experiment_1_losses_2, experiment_2_losses_2, experiment_3_losses_2]
 
 plot_losses_per_experiment(loss_data, "plots/part1", false, false, false)
+
+plot_losses_per_experiment(loss_data_2, "plots/part2", false, false, false, 0.0)

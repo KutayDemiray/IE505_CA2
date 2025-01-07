@@ -5,12 +5,13 @@ function plot_losses_per_experiment(
     output_dir::String, 
     log_scale::Bool=false, 
     log_y_scale::Bool=false, 
-    extend_converged::Bool=true
+    extend_converged::Bool=true,
+    offset::Float64=0.2
 )
     mkpath(output_dir)
 
     colors = [:blue, :green, :red, :orange, :purple, :cyan, :magenta, :black]
-    line_offsets = 0.2  # Offset for vertical lines when algorithms converge at the same step
+    line_offsets = offset  # Offset for vertical lines when algorithms converge at the same step
 
     for (i, experiment) in enumerate(loss_data)
         plot()  # Start a new plot for each experiment
@@ -45,7 +46,7 @@ function plot_losses_per_experiment(
 
         # Customize the plot
         xlabel!(log_scale ? "Iterations (log scale)" : "Iterations")
-        ylabel!(log_y_scale ? "Loss (log scale)" : "Loss")
+        ylabel!(log_y_scale ? "Objective Value (log scale)" : "Objective Value")
         title!("Experiment $i Losses")
         if log_scale
             xaxis!(:log10)

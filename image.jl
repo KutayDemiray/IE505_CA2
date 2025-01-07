@@ -1,3 +1,5 @@
+import Pkg; Pkg.add("Images")
+
 using SparseArrays, LinearAlgebra, Images
 include("hista.jl")  # Load the unmodified implementations from hista.jl
 
@@ -69,7 +71,7 @@ function compute_lipschitz_huber(A, gamma)
 end
 
 # Main deblurring workflow
-function deblur_image(blurred_image, kernel, lambda, gamma, max_iter=1000, tol=1e-6)
+function deblur_image(blurred_image, kernel, lambda, gamma, max_iter=500, tol=1e-6)
     # Image size
     image_size = size(blurred_image)
 
@@ -86,7 +88,7 @@ function deblur_image(blurred_image, kernel, lambda, gamma, max_iter=1000, tol=1
 
     # Run HISTA
     println("Starting FHISTA")
-    x_recovered, obj_vals = FastHISTA(A, b, lambda, gamma, true, 100000, 1e-3)
+    x_recovered, obj_vals = FastHISTA(A, b, lambda, gamma, true, max_iter, 1e-3)
     println("Finished FHISTA")
 
     # Reshape recovered vector into an image

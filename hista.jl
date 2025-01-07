@@ -105,7 +105,7 @@ function HISTA(A, b, lambda, gamma, line_search=false, max_iter=100000, tol=1e-6
         end
         push!(obj_vals, robust_huber(x_new, A, b, gamma, lambda))
 
-        println("Iteration $k: $(norm(x_new - x))")
+        #println("Iteration $k: $(norm(x_new - x))")
         # Convergence check
         if norm(x_new - x) < tol
             println("Converged in $k iterations.")
@@ -118,25 +118,37 @@ function HISTA(A, b, lambda, gamma, line_search=false, max_iter=100000, tol=1e-6
     return x, obj_vals
 end
 
-function FastHISTA(A, b, lambda, gamma, line_search=false, max_iter=100000, tol=1e-6, beta=0.9)
+function FastHISTA(A, b, lambda, gamma, line_search=false, init_t_with_L=false, max_iter=100000, tol=1e-6, beta=0.9)
     # Initialize variables
     x = zeros(size(A, 2))
     x_new = copy(x)
     x_prev = zeros(size(A, 2))
     if line_search
-        eta = 1.0
+        if init_t_with_L
+            L = compute_lipschitz_huber(A, gamma)
+            eta = 1.0 / L
+        else
+            eta = 1.0
+        end
     else
         L = compute_lipschitz_huber(A, gamma)
         eta = 1.0 / L  # constant step size
     end
-    t = 1.0  # momentum parameter
+
+    t = 1.0
     t_prev = 1.0
+    if init_t_with_L
+        L = compute_lipschitz_huber(A, gamma)
+        t = 1 / L  # momentum parameter
+        t_prev = 1 / L
+    end
 
     obj_vals = Float64[]
 
     for k in 1:max_iter
         # Momentum update
-        momentum = min(1.0, (t_prev - 1) / t)
+        #momentum = min(1.0, (t_prev - 1) / t)
+        momentum = (t_prev - 1) / t
         y = x + momentum * (x - x_prev)
 
         # Gradient of the smooth part
@@ -173,7 +185,7 @@ function FastHISTA(A, b, lambda, gamma, line_search=false, max_iter=100000, tol=
         t_new = (1 + sqrt(1 + 4 * t^2)) / 2
 
         push!(obj_vals, robust_huber(x_new, A, b, gamma, lambda))
-        println("Iteration $k: $(norm(x_new - x))")
+        #println("Iteration $k: $(norm(x_new - x))")
         # Convergence check
         if norm(x_new - x) < tol
             println("Converged in $k iterations.")
@@ -191,10 +203,11 @@ function FastHISTA(A, b, lambda, gamma, line_search=false, max_iter=100000, tol=
 end
 
 
-function ProxNewton(A, b, lambda, gamma, line_search=true, max_iter=100000, tol=1e-6, alpha=0.1, beta=0.5)
-    # Initialize variables
-    x = zeros(size(A, 2))  # Initial guess
+function ProxNewton(A, b, lambda, gamma, line_search=false, max_iter=100000, tol=1e-6, alpha=0.1, beta=0.5)
+    x = zeros(size(A, 2))
     x_new = copy(x)
+
+    L = compute_lipschitz_huber(A, gamma)
 
     epsilon = 1e-6  # Regularization parameter
 
@@ -209,7 +222,7 @@ function ProxNewton(A, b, lambda, gamma, line_search=true, max_iter=100000, tol=
 
         # Compute exact Hessian with regularization
         W = Diagonal([abs(residual[i]) <= gamma ? 1.0 / gamma : 0.0 for i in 1:length(residual)])
-        H = A' * W * A + epsilon * I(size(A, 2))  # Regularized Hessian
+        H = A' * W * A + epsilon * I(size(A, 2))  # Regularized Hessian with added term to prevent singularity
 
         # Initialize `z` with a fallback value
         z = grad  # Fallback to gradient descent if no solution for z is found
@@ -255,6 +268,10 @@ function ProxNewton(A, b, lambda, gamma, line_search=true, max_iter=100000, tol=
         # Update solution
         x_new = x + t * v
 
+        if !line_search
+            x_new = x + (1 / L) * v
+        end
+
         push!(obj_vals, robust_huber(x_new, A, b, gamma, lambda))
 
         # Convergence check
@@ -294,7 +311,8 @@ function FISTA(A, b, lambda, line_search=false, max_iter=100000, tol=1e-6, beta=
 
     for k in 1:max_iter
         # Momentum update
-        momentum = min(1.0, (t_prev - 1) / t)
+        #momentum = min(1.0, (t_prev - 1) / t)
+        momentum = (t_prev - 1) / t
         y = x + momentum * (x - x_prev)
 
         # Gradient of the smooth part (L2 loss)
