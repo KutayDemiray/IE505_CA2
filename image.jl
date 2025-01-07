@@ -1,5 +1,3 @@
-import Pkg; Pkg.add("Images")
-
 using SparseArrays, LinearAlgebra, Images
 include("hista.jl")  # Load the unmodified implementations from hista.jl
 
@@ -88,7 +86,7 @@ function deblur_image(blurred_image, kernel, lambda, gamma, max_iter=500, tol=1e
 
     # Run HISTA
     println("Starting FHISTA")
-    x_recovered, obj_vals = FastHISTA(A, b, lambda, gamma, true, max_iter, 1e-3)
+    x_recovered, obj_vals = FastHISTA(A, b, lambda, gamma, true, false, max_iter, 1e-3)
     println("Finished FHISTA")
 
     # Reshape recovered vector into an image
